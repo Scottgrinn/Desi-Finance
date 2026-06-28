@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover">
+<title>Desi Finance</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Desi Finance">
+<meta name="theme-color" content="#E4C988">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;min-height:100vh;font-family:'Plus Jakarta Sans',system-ui,sans-serif;
+  background:#E4C988;
+  background-image:radial-gradient(circle at 22% 12%,#FAF0D4 0%,rgba(250,240,212,0) 52%),linear-gradient(160deg,#EBD6A0 0%,#D8B670 48%,#BE9447 100%);
+  background-attachment:fixed;}
+::-webkit-scrollbar{width:0;height:0;}
+@keyframes pftUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+@keyframes pftFade{from{opacity:0;}to{opacity:1;}}
+input,button,textarea{font-family:inherit;}
+input::placeholder{color:#B39A6A;}
+input[type=number]::-webkit-inner-spin-button{opacity:.25;}
+input[type=date]::-webkit-calendar-picker-indicator{opacity:.55;}
+.app-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;}
+.phone{width:100%;max-width:430px;height:100vh;max-height:932px;background:#FBF5E9;position:relative;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 40px 120px rgba(92,60,18,0.38),0 10px 34px rgba(92,60,18,0.18);border:1px solid rgba(255,255,255,0.55);}
+.scroll-area{flex:1;overflow-y:auto;overflow-x:hidden;}
+.tab-bar{display:flex;background:#FBF2E1;border-top:1px solid rgba(150,115,55,0.16);padding:9px 8px 14px;flex-shrink:0;z-index:15;}
+.tab-btn{flex:1;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;padding:4px;}
+.fab{position:absolute;bottom:84px;right:18px;width:60px;height:60px;border-radius:20px;border:none;color:#33270F;font-size:30px;font-weight:300;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:20;line-height:1;}
+.sheet-overlay{position:absolute;inset:0;background:rgba(58,38,10,0.38);z-index:50;animation:pftFade .2s ease;}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:51;background:#FFFDF8;border-radius:26px 26px 0 0;padding:8px 18px 20px;animation:pftUp .26s cubic-bezier(.2,.8,.2,1);border-top:1px solid rgba(150,115,55,0.18);box-shadow:0 -14px 44px rgba(92,60,18,0.20);}
+.search-overlay{position:absolute;inset:0;background:#FBF5E9;z-index:40;display:flex;flex-direction:column;animation:pftFade .18s ease;}
+.keypad-btn{padding:16px;border-radius:14px;border:none;background:#F4EAD4;color:#2E2614;font-size:22px;font-weight:600;font-family:'JetBrains Mono',monospace;cursor:pointer;}
+.chip{padding:9px 13px;border-radius:11px;font-size:13px;font-weight:600;cursor:pointer;}
+.tx-row{display:flex;align-items:center;gap:13px;background:none;border:none;border-radius:14px;padding:11px 8px;cursor:pointer;text-align:left;width:100%;}
+.tx-row:hover{background:rgba(92,60,18,0.04);}
+.progress-bar{height:8px;border-radius:6px;overflow:hidden;background:rgba(150,115,55,0.16);}
+.progress-fill{height:100%;border-radius:6px;}
+.menu-btn{display:flex;align-items:center;gap:13px;background:#FFFFFF;border:1px solid rgba(150,115,55,0.16);border-radius:14px;padding:15px;cursor:pointer;text-align:left;width:100%;margin-bottom:8px;box-shadow:0 1px 2px rgba(92,60,18,0.04);}
+.tx-swipe{position:relative;overflow:hidden;border-radius:14px;}
+.tx-del{position:absolute;top:0;right:0;height:100%;width:96px;background:#C0452F;color:#fff;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:700;font-size:12.5px;border:none;cursor:pointer;}
+.tx-rowswipe{position:relative;background:#FBF5E9;touch-action:pan-y;transition:transform .18s cubic-bezier(.2,.8,.2,1);will-change:transform;z-index:1;}
+</style>
+</head>
+<body>
+<div class="app-wrap"><div class="phone" id="phone"></div></div>
+<script>
+const CUR=[['INR','Indian Rupee'],['USD','US Dollar'],['EUR','Euro'],['GBP','British Pound'],['JPY','Japanese Yen'],['AUD','Australian Dollar'],['CAD','Canadian Dollar'],['CHF','Swiss Franc'],['CNY','Chinese Yuan'],['SGD','Singapore Dollar'],['AED','UAE Dirham'],['SAR','Saudi Riyal'],['HKD','Hong Kong Dollar'],['NZD','NZ Dollar'],['SEK','Swedish Krona'],['NOK','Norwegian Krone'],['DKK','Danish Krone'],['ZAR','South African Rand'],['BRL','Brazilian Real'],['MXN','Mexican Peso'],['RUB','Russian Ruble'],['KRW','South Korean Won'],['THB','Thai Baht'],['MYR','Malaysian Ringgit'],['IDR','Indonesian Rupiah'],['PHP','Philippine Peso'],['VND','Vietnamese Dong'],['TRY','Turkish Lira'],['PLN','Polish Zloty'],['CZK','Czech Koruna'],['HUF','Hungarian Forint'],['ILS','Israeli Shekel'],['EGP','Egyptian Pound'],['NGN','Nigerian Naira'],['KES','Kenyan Shilling'],['PKR','Pakistani Rupee'],['BDT','Bangladeshi Taka'],['LKR','Sri Lankan Rupee'],['NPR','Nepalese Rupee'],['QAR','Qatari Riyal'],['KWD','Kuwaiti Dinar'],['BHD','Bahraini Dinar'],['OMR','Omani Rial'],['TWD','Taiwan Dollar'],['ARS','Argentine Peso'],['CLP','Chilean Peso'],['COP','Colombian Peso'],['UAH','Ukrainian Hryvnia'],['RON','Romanian Leu']];
+const CATPAL=['#C0452F','#1E875A','#B5892E','#2D7DA8','#8A5CC0','#C2557F','#B06A2A','#3C8C6E','#A23E5C','#5B73C9','#9A7B1E','#2C8A8A'];
+const THEMES=[{name:'Royal Gold',desc:'Classic gold leaf',color:'#B5892E'},{name:'Rose Gold',desc:'Warm blush metal',color:'#C08457'},{name:'Emerald Ledger',desc:'Deep jewel green',color:'#1E875A'},{name:'Saffron',desc:'Rich Indian spice',color:'#C9742B'},{name:'Royal Plum',desc:'Regal violet',color:'#8A5CC0'},{name:'Crimson Silk',desc:'Bold festive red',color:'#C0452F'}];
+// Premium cream + gold palette tokens.
+const C={bg:'#FBF5E9',surf:'#FFFCF4',surf2:'#FBF2E1',inset:'#F4EAD4',line:'rgba(150,115,55,0.18)',line2:'rgba(150,115,55,0.10)',ink:'#2E2614',ink2:'#5C4E33',mut:'#8F7748',faint:'#A89069',inc:'#1E875A',exp:'#C0452F',save:'#B5892E',goldDeep:'#9A7B1E'};
+const SERIF="'Fraunces',Georgia,serif";
+const PERSIST=['tx','buckets','categories','budgets','recurring','currency','accent'];
+
+let S={tab:'home',sheetOpen:false,bucketSheetOpen:false,searchOpen:false,searchText:'',editingId:null,moreView:null,range:'month',curSearch:'',catInput:'',catType:'expense',customFrom:'',customTo:'',recFormType:'expense',draft:{type:'expense',amount:'0',category:null,bucket:null,note:'',date:'',account:'Cash'},bucketForm:{name:'',base:'',goal:'',color:'#B5892E'},recForm:{category:'',amount:'',day:'1'},taxFY:'',taxSalaried:true,taxGross:'',taxDeduct:'',scanBusy:false,scanMsg:'',user:null,authed:false,tx:[],buckets:[],categories:{expense:[],income:[]},budgets:{},recurring:[],currency:{code:'INR'},accent:'#B5892E',_ready:false};
+
+function setState(u){const p=typeof u==='function'?u(S):u;S={...S,...p};render();}
+function set(p){setState(p);persist();}
+const DATA_VERSION=3;
+// ── GOOGLE SIGN-IN ──
+// Paste your Google OAuth Client ID below to enable "Continue with Google".
+// Get one free at https://console.cloud.google.com (APIs & Services → Credentials
+// → OAuth client ID → Web application), and add your site URL under
+// "Authorized JavaScript origins". Leaving this blank keeps guest mode only.
+const GOOGLE_CLIENT_ID='';
+function storeKey(){return (S.user&&S.user.sub)?('pft_v2_'+S.user.sub):'pft_v2';}
+function persist(){const o={_v:DATA_VERSION};PERSIST.forEach(k=>o[k]=S[k]);try{localStorage.setItem(storeKey(),JSON.stringify(o));}catch(e){}}
+function decodeJwt(t){try{return JSON.parse(decodeURIComponent(atob(t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')).split('').map(c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join('')));}catch(e){return null;}}
+function loadDataForUser(){let stored=null;try{stored=JSON.parse(localStorage.getItem(storeKey())||'null');}catch(e){}if(stored&&stored._v===DATA_VERSION){const p={};PERSIST.forEach(k=>{if(stored[k]!==undefined)p[k]=stored[k];});S={...S,...p};}else{S={...S,...makeSeed()};persist();}}
+function onGoogleCredential(resp){const p=decodeJwt(resp.credential);if(!p)return;const user={sub:p.sub,name:p.name||'',email:p.email||'',picture:p.picture||''};try{localStorage.setItem('df_session',JSON.stringify(user));}catch(e){}S.user=user;S.authed=true;loadDataForUser();S._ready=true;render();applyRecurring();}
+function continueGuest(){try{localStorage.setItem('df_session',JSON.stringify({guest:true}));}catch(e){}S.user=null;S.authed=true;loadDataForUser();S._ready=true;render();applyRecurring();}
+function signOut(){try{localStorage.removeItem('df_session');}catch(e){}try{if(window.google&&google.accounts&&google.accounts.id)google.accounts.id.disableAutoSelect();}catch(e){}S.user=null;S.authed=false;render();}
+function initGoogle(){if(!GOOGLE_CLIENT_ID)return;const go=()=>{if(window.google&&google.accounts&&google.accounts.id){try{google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID,callback:onGoogleCredential});const el=document.getElementById('g-btn');if(el)google.accounts.id.renderButton(el,{theme:'filled_blue',size:'large',shape:'pill',text:'continue_with',width:260});}catch(e){}}else{setTimeout(go,300);}};go();}
+
+function isoDate(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function today(){return isoDate(new Date());}
+function fmt(n,dec){const code=S.currency.code;const d=dec==null?0:dec;try{return new Intl.NumberFormat(undefined,{style:'currency',currency:code,minimumFractionDigits:d,maximumFractionDigits:d}).format(n||0);}catch(e_){return sym()+Math.round(n||0).toLocaleString();}}
+function sym(){const code=S.currency.code;try{const p=new Intl.NumberFormat(undefined,{style:'currency',currency:code}).formatToParts(0);const s=p.find(x=>x.type==='currency');return s?s.value:code;}catch(e_){return code;}}
+function symFor(code){try{const p=new Intl.NumberFormat(undefined,{style:'currency',currency:code}).formatToParts(0);const s=p.find(x=>x.type==='currency');return s?s.value:code;}catch(e_){return code;}}
+function groupAmt(str){if(str==null)return'0';const[i,d]=String(str).split('.');const gi=Number(i||0).toLocaleString('en-US');return d!=null?gi+'.'+d:gi;}
+function fmtDate(s){try{return new Date(s+'T00:00').toLocaleDateString(undefined,{day:'numeric',month:'short'});}catch(e_){return s;}}
+function sumTx(list,type){return list.filter(t=>t.type===type).reduce((a,t)=>a+(+t.amount||0),0);}
+function hexA(hex,a){const n=parseInt(hex.slice(1),16);return'rgba('+((n>>16)&255)+','+((n>>8)&255)+','+(n&255)+','+a+')';}
+function darken(hex){const n=parseInt(hex.slice(1),16);return'rgb('+Math.round(((n>>16)&255)*.6)+','+Math.round(((n>>8)&255)*.6)+','+Math.round((n&255)*.6)+')';}
+function catColor(name){let h=0;for(let i=0;i<name.length;i++)h=(h*31+name.charCodeAt(i))>>>0;return CATPAL[h%CATPAL.length];}
+function bounds(){const now=new Date();const y=now.getFullYear(),mo=String(now.getMonth()+1).padStart(2,'0');const r=S.range;if(r==='week'){const s=new Date(now);s.setDate(now.getDate()-6);return[isoDate(s),today()];}if(r==='month')return[y+'-'+mo+'-01',y+'-'+mo+'-31'];if(r==='year')return[y+'-01-01',y+'-12-31'];if(r==='custom')return[S.customFrom||'0000-01-01',S.customTo||'9999-12-31'];return['0000-01-01','9999-12-31'];}
+function inRange(){const[a,b]=bounds();return S.tx.filter(t=>t.date>=a&&t.date<=b);}
+function bucketVal(b){return(b.base||0)+S.tx.filter(t=>t.bucket===b.id).reduce((a,t)=>a+(+t.amount||0),0);}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ── FINANCIAL YEAR + INDIA TAX (FY 2025-26 / AY 2026-27 rules) ──
+function currentFYStart(){const n=new Date();return n.getMonth()>=3?n.getFullYear():n.getFullYear()-1;}
+function fyLabel(sy){return sy+'-'+String((sy+1)%100).padStart(2,'0');}
+function fyList(){const c=currentFYStart();const out=[];for(let y=c;y>=c-5;y--)out.push(fyLabel(y));return out;}
+function fyStartYearOf(label){return parseInt(label.slice(0,4),10);}
+function fyBounds(label){const sy=fyStartYearOf(label);return[sy+'-04-01',(sy+1)+'-03-31'];}
+function activeFY(){return S.taxFY||fyLabel(currentFYStart()-1);} // default = last completed FY
+function slabTax(t,slabs){let tax=0,prev=0;for(const[lim,rate]of slabs){if(t>lim){tax+=(lim-prev)*rate;prev=lim;}else{tax+=(t-prev)*rate;break;}}return Math.max(0,tax);}
+function surcharge(tax,inc,isNew){let r=0;if(inc>50000000)r=isNew?0.25:0.37;else if(inc>20000000)r=0.25;else if(inc>10000000)r=0.15;else if(inc>5000000)r=0.10;return tax*r;}
+const NEW_SLABS=[[400000,0],[800000,.05],[1200000,.10],[1600000,.15],[2000000,.20],[2400000,.25],[Infinity,.30]];
+const OLD_SLABS=[[250000,0],[500000,.05],[1000000,.20],[Infinity,.30]];
+function computeTax(gross,salaried,deduct){
+  // NEW regime (FY 2025-26): only standard deduction; 87A makes tax nil up to 12L taxable.
+  const stdN=salaried?75000:0;const taxN=Math.max(0,gross-stdN);
+  const rawN=slabTax(taxN,NEW_SLABS);
+  // 87A rebate up to ₹12L taxable; marginal relief just above the threshold.
+  const baseN=taxN<=1200000?0:Math.min(rawN,taxN-1200000);
+  const surN=surcharge(baseN,taxN,true);const cessN=(baseN+surN)*0.04;const totN=Math.round(baseN+surN+cessN);
+  // OLD regime (FY 2025-26): standard deduction + chapter VI-A deductions; 87A nil up to 5L.
+  const stdO=salaried?50000:0;const taxO=Math.max(0,gross-stdO-(deduct||0));
+  let baseO=slabTax(taxO,OLD_SLABS);if(taxO<=500000)baseO=0;
+  const surO=surcharge(baseO,taxO,false);const cessO=(baseO+surO)*0.04;const totO=Math.round(baseO+surO+cessO);
+  return{taxableNew:taxN,baseNew:Math.round(baseN),cessNew:Math.round(surN+cessN),totalNew:totN,taxableOld:taxO,baseOld:Math.round(baseO),cessOld:Math.round(surO+cessO),totalOld:totO};
+}
+// ── BILL EXTRACTION (best-effort, client side) ──
+function loadScript(src){return new Promise((res,rej)=>{if(document.querySelector('script[data-x="'+src+'"]'))return res();const s=document.createElement('script');s.src=src;s.async=true;s.dataset.x=src;s.onload=()=>res();s.onerror=()=>rej(new Error('load failed'));document.head.appendChild(s);});}
+function readAB(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsArrayBuffer(file);});}
+function parseBill(text){
+  const lines=text.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+  const num=s=>parseFloat(String(s).replace(/[,\s₹]/g,''));
+  const numRe=/(\d{1,3}(?:[,\d]{0,12})(?:\.\d{1,2})?)/g;
+  let amount=null;
+  const keyLines=lines.filter(l=>/total|amount\s*(payable|due)|grand\s*total|net\s*(amount|payable)|balance\s*due/i.test(l));
+  const pickMax=arr=>{let best=null;arr.forEach(l=>{const m=l.match(numRe);if(m)m.forEach(x=>{const v=num(x);if(v>0&&v<1e9&&(best==null||v>best))best=v;});});return best;};
+  amount=pickMax(keyLines);
+  if(amount==null)amount=pickMax(lines);
+  let date=null;
+  const dm=text.match(/(\b[0-3]?\d)[\/\-.\s]([01]?\d)[\/\-.\s](\d{4}|\d{2})\b/);
+  const iso=text.match(/\b(\d{4})-(\d{2})-(\d{2})\b/);
+  const mon=text.match(/\b([0-3]?\d)\s*[-\s]?\s*(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s*,?\s*(\d{4})\b/i);
+  const MN={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
+  if(iso)date=iso[1]+'-'+iso[2]+'-'+iso[3];
+  else if(mon){const y=mon[3];date=y+'-'+String(MN[mon[2].toLowerCase()]).padStart(2,'0')+'-'+String(mon[1]).padStart(2,'0');}
+  else if(dm){let y=dm[3];if(y.length===2)y='20'+y;date=y+'-'+String(dm[2]).padStart(2,'0')+'-'+String(dm[1]).padStart(2,'0');}
+  let note=null;
+  for(const l of lines){if(l.length>2&&l.length<40&&/[a-z]/i.test(l)&&!/total|invoice|receipt|gst|tax|date|bill|amount/i.test(l)){note=l.replace(/[^\w\s&.\-]/g,'').trim();break;}}
+  return{amount:amount!=null?Math.round(amount*100)/100:null,date,note};
+}
+async function extractBill(file){
+  const name=(file.name||'').toLowerCase();const type=file.type||'';
+  if(type.startsWith('image/')||/\.(png|jpe?g|webp|bmp|gif|heic)$/.test(name)){
+    await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
+    const r=await window.Tesseract.recognize(file,'eng');return r.data.text||'';
+  }
+  if(type==='application/pdf'||/\.pdf$/.test(name)){
+    await loadScript('https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js');
+    const pdfjs=window.pdfjsLib;pdfjs.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+    const ab=await readAB(file);const pdf=await pdfjs.getDocument({data:ab}).promise;let out='';
+    for(let i=1;i<=Math.min(pdf.numPages,5);i++){const pg=await pdf.getPage(i);const tc=await pg.getTextContent();out+='\n'+tc.items.map(it=>it.str).join(' ');}
+    return out;
+  }
+  if(/\.docx?$/.test(name)||type.indexOf('word')>=0||type.indexOf('officedocument')>=0){
+    await loadScript('https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js');
+    const ab=await readAB(file);const r=await window.mammoth.extractRawText({arrayBuffer:ab});return r.value||'';
+  }
+  throw new Error('Unsupported file type');
+}
+function scanBill(){
+  const inp=document.createElement('input');inp.type='file';inp.accept='image/*,.pdf,.doc,.docx,application/pdf';
+  inp.onchange=async()=>{const f=inp.files&&inp.files[0];if(!f)return;
+    setState({sheetOpen:true,editingId:null,scanBusy:true,scanMsg:'Reading "'+f.name+'"…'});
+    try{const text=await extractBill(f);const g=parseBill(text);
+      setState(s=>({scanBusy:false,scanMsg:g.amount!=null?('Found '+sym()+g.amount.toLocaleString()+(g.date?' · '+g.date:'')+' — review & save'):'No amount detected — please enter it manually.',draft:{...s.draft,amount:g.amount!=null?String(g.amount):s.draft.amount,date:g.date||s.draft.date||today(),note:g.note||s.draft.note}}));
+    }catch(e){setState({scanBusy:false,scanMsg:'Couldn’t read this file ('+(navigator.onLine?'try a clearer image/PDF':'needs internet for the first scan')+').'});}
+  };
+  inp.click();
+}
+function downloadBackup(){const data={_v:DATA_VERSION,exportedAt:new Date().toISOString()};PERSIST.forEach(k=>data[k]=S[k]);const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='desi-finance-backup-'+today()+'.json';a.click();}
+function restoreBackup(){const inp=document.createElement('input');inp.type='file';inp.accept='application/json,.json';inp.onchange=()=>{const f=inp.files&&inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!d||!Array.isArray(d.tx))throw 0;if(!window.confirm('Restore this backup? It will replace your current data.'))return;const p={};PERSIST.forEach(k=>{if(d[k]!==undefined)p[k]=d[k];});setState({...p,tab:'home',moreView:null});persist();}catch(e){window.alert('That file is not a valid Desi Finance backup.');}};r.readAsText(f);};inp.click();}
+
+function makeSeed(){
+// Empty starting state for a new user: no transactions, no fake amounts.
+// Provides sensible default category lists and zeroed starter savings buckets only.
+return{tx:[],buckets:[{id:'sip',name:'SIP / Mutual Funds',base:0,goal:0,color:'#1E875A'},{id:'gold',name:'Gold',base:0,goal:0,color:'#B5892E'},{id:'epf',name:'EPF',base:0,goal:0,color:'#2D7DA8'},{id:'emg',name:'Emergency Fund',base:0,goal:0,color:'#C0452F'}],categories:{expense:['Food','Groceries','Rent','Bills','Transport','Shopping','Dining','Health','Entertainment','Education','Travel','Subscriptions','Other'],income:['Salary','Freelance','Bonus','Interest','Rental','Gift','Refund','Other']},budgets:{},recurring:[],currency:{code:'INR'},accent:'#B5892E'};}
+
+function applyRecurring(){const now=new Date();const y=now.getFullYear(),mo=now.getMonth();const mk=y+'-'+String(mo+1).padStart(2,'0');let changed=false;const tx=S.tx.slice();(S.recurring||[]).forEach(r=>{if(r.day>now.getDate())return;const exists=tx.some(t=>t.recId===r.id&&t.date.slice(0,7)===mk);if(!exists){tx.unshift({id:Date.now()+Math.random(),recId:r.id,type:r.type,amount:r.amount,category:r.category,bucket:null,note:'Recurring',account:'Auto',date:y+'-'+String(mo+1).padStart(2,'0')+'-'+String(r.day).padStart(2,'0')});changed=true;}});if(changed)set({tx});}
+
+function mapTx(t){const tc=t.type==='income'?C.inc:(t.type==='expense'?catColor(t.category):C.save);return{sid:String(t.id),category:t.category,initial:(t.category||'?').charAt(0).toUpperCase(),sub:t.note?t.note:(t.type==='saving'?'Saved':(t.account||t.type)),amountFmt:(t.type==='income'?'+':(t.type==='expense'?'-':'•'))+' '+fmt(t.amount),amtColor:t.type==='income'?C.inc:(t.type==='expense'?C.exp:C.save),tint:tc,tintBg:hexA(tc,0.14),dateFmt:fmtDate(t.date)};}
+
+// ── RENDER: HOME ──
+function renderHome(){
+  const all=S.tx;const A=S.accent;
+  const bal=sumTx(all,'income')-sumTx(all,'expense')-sumTx(all,'saving');
+  const totSaved=S.buckets.reduce((a,b)=>a+bucketVal(b),0);
+  const now=new Date();const mk=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  const mtx=all.filter(t=>t.date.slice(0,7)===mk);
+  const mInc=sumTx(mtx,'income'),mExp=sumTx(mtx,'expense'),mSav=sumTx(mtx,'saving');
+  const mRate=mInc>0?Math.round(mSav/mInc*100):0;
+  const recent=all.slice().sort((a,b)=>b.id-a.id).slice(0,12).map(mapTx);
+  const hr=now.getHours();const greeting=hr<12?'Good morning':hr<17?'Good afternoon':'Good evening';
+  return`<div style="padding:20px 18px 120px;">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;">
+  <div><div style="font-family:${SERIF};font-size:23px;font-weight:600;color:${C.ink};letter-spacing:-0.01em;line-height:1;">Desi <span style="color:${C.save};">Finance</span></div><div style="font-size:12.5px;color:${C.mut};font-weight:500;margin-top:5px;">${esc(greeting)}</div></div>
+  <button id="go-currency" style="display:flex;align-items:center;gap:6px;background:${C.surf};border:1px solid ${C.line};color:${C.ink2};font-size:13px;font-weight:700;padding:8px 12px;border-radius:12px;cursor:pointer;box-shadow:0 1px 2px rgba(92,60,18,0.05);">${esc(S.currency.code)} <span style="opacity:.5;">›</span></button>
+</div>
+<div style="border-radius:24px;padding:24px 22px;background:linear-gradient(150deg,#CFA64C 0%,#A9791F 62%,#8A5E16 100%);box-shadow:0 16px 38px rgba(138,94,22,0.35);position:relative;overflow:hidden;">
+  <div style="position:absolute;top:-46px;right:-34px;width:170px;height:170px;border-radius:50%;background:#FFFFFF;opacity:0.18;filter:blur(18px);"></div>
+  <div style="position:absolute;bottom:-50px;left:-30px;width:130px;height:130px;border-radius:50%;background:#5C3E0C;opacity:0.20;filter:blur(22px);"></div>
+  <div style="font-size:12.5px;color:rgba(255,255,255,0.82);font-weight:600;letter-spacing:0.05em;text-transform:uppercase;position:relative;">Available balance</div>
+  <div style="font-family:'JetBrains Mono',monospace;font-size:38px;font-weight:700;color:#FFFDF4;letter-spacing:-0.02em;margin-top:6px;position:relative;">${esc(fmt(bal))}</div>
+  <div style="display:flex;gap:10px;margin-top:18px;position:relative;">
+    <div style="flex:1;background:rgba(255,255,255,0.16);border-radius:14px;padding:11px 13px;"><div style="font-size:11px;color:rgba(255,255,255,0.78);font-weight:600;">Net worth</div><div style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:#FFFDF4;margin-top:3px;">${esc(fmt(bal+totSaved))}</div></div>
+    <div style="flex:1;background:rgba(255,255,255,0.22);border-radius:14px;padding:11px 13px;"><div style="font-size:11px;color:rgba(255,255,255,0.85);font-weight:600;">Total saved</div><div style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:#FFFFFF;margin-top:3px;">${esc(fmt(totSaved))}</div></div>
+  </div>
+</div>
+<div style="display:flex;align-items:center;justify-content:space-between;margin:24px 2px 12px;">
+  <div style="font-family:${SERIF};font-size:17px;font-weight:600;color:${C.ink};">Recent activity</div>
+  <button id="go-search" style="background:none;border:none;color:${C.save};font-size:12.5px;font-weight:700;cursor:pointer;">Search</button>
+</div>
+${recent.length?`<div style="display:flex;flex-direction:column;gap:4px;">${recent.map(t=>`<div class="tx-swipe"><button class="tx-del" data-del="${esc(t.sid)}">🗑 Delete</button><button class="tx-row tx-rowswipe" data-edit="${esc(t.sid)}"><div style="width:42px;height:42px;border-radius:13px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;background:${t.tintBg};color:${t.tint};">${esc(t.initial)}</div><div style="flex:1;min-width:0;"><div style="font-size:14.5px;font-weight:600;color:${C.ink};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(t.category)}</div><div style="font-size:12px;color:${C.mut};margin-top:2px;">${esc(t.sub)}</div></div><div style="text-align:right;flex-shrink:0;"><div style="font-family:'JetBrains Mono',monospace;font-size:14.5px;font-weight:700;color:${t.amtColor};">${esc(t.amountFmt)}</div><div style="font-size:11px;color:${C.faint};margin-top:2px;">${esc(t.dateFmt)}</div></div></button></div>`).join('')}</div>`:
+(S._ready?`<div style="text-align:center;padding:40px 20px;color:${C.mut};font-size:13.5px;">No transactions yet.<br>Tap the + button to add one.</div>`:'')}
+<div style="display:flex;align-items:baseline;justify-content:space-between;margin:28px 2px 12px;">
+  <div style="font-family:${SERIF};font-size:17px;font-weight:600;color:${C.ink};">${esc(now.toLocaleDateString(undefined,{month:'long'}))}</div>
+  <div style="font-size:12px;color:${C.mut};font-weight:600;">Savings rate ${mRate}%</div>
+</div>
+<div style="display:flex;gap:10px;">
+  <div style="flex:1;background:${C.surf};border:1px solid rgba(30,135,90,0.28);border-radius:16px;padding:14px;"><div style="font-size:11.5px;color:${C.inc};font-weight:700;">In</div><div style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;color:${C.inc};margin-top:5px;">${esc(fmt(mInc))}</div></div>
+  <div style="flex:1;background:${C.surf};border:1px solid rgba(192,69,47,0.28);border-radius:16px;padding:14px;"><div style="font-size:11.5px;color:${C.exp};font-weight:700;">Out</div><div style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;color:${C.exp};margin-top:5px;">${esc(fmt(mExp))}</div></div>
+  <div style="flex:1;background:${C.surf};border:1px solid rgba(181,137,46,0.30);border-radius:16px;padding:14px;"><div style="font-size:11.5px;color:${C.save};font-weight:700;">Saved</div><div style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;color:${C.save};margin-top:5px;">${esc(fmt(mSav))}</div></div>
+</div></div>`;
+}
+
+// ── RENDER: INSIGHTS ──
+function renderInsights(){
+  const A=S.accent;const now=new Date();
+  const rtx=inRange();
+  const rE=sumTx(rtx,'income'),rS=sumTx(rtx,'expense'),rSv=sumTx(rtx,'saving');
+  const rRate=rE>0?Math.round(rSv/rE*100):0;
+  const rangeDefs=[['week','Week'],['month','Month'],['year','Year'],['all','All'],['custom','Custom']];
+  let tmax=1;const trendRaw=[];
+  for(let m=5;m>=0;m--){const d=new Date(now.getFullYear(),now.getMonth()-m,1);const k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');const mt=S.tx.filter(t=>t.date.slice(0,7)===k);const inc=sumTx(mt,'income'),exp=sumTx(mt,'expense');tmax=Math.max(tmax,inc,exp);trendRaw.push({label:d.toLocaleDateString(undefined,{month:'short'}),inc,exp});}
+  const trend=trendRaw.map(t=>({label:t.label,incH:Math.max(2,Math.round(t.inc/tmax*100)),expH:Math.max(2,Math.round(t.exp/tmax*100)),incFmt:fmt(t.inc),expFmt:fmt(t.exp)}));
+  const catMap={};rtx.filter(t=>t.type==='expense').forEach(t=>catMap[t.category]=(catMap[t.category]||0)+(+t.amount||0));
+  const catArr=Object.entries(catMap).sort((a,b)=>b[1]-a[1]);const cmax=catArr.length?catArr[0][1]:1;
+  const catRows=catArr.slice(0,8).map(([cat,amt])=>({cat,amountFmt:fmt(amt),pct:rS>0?Math.round(amt/rS*100):0,width:Math.round(amt/cmax*100),color:catColor(cat)}));
+  const mk=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  const mtx=S.tx.filter(t=>t.date.slice(0,7)===mk);
+  const budgetRows=Object.entries(S.budgets).map(([cat,lim])=>{const spent=mtx.filter(t=>t.type==='expense'&&t.category===cat).reduce((a,t)=>a+(+t.amount||0),0);const pct=lim>0?spent/lim*100:0;const over=pct>100;return{cat,spentFmt:fmt(spent),limitFmt:fmt(lim),width:Math.min(100,Math.round(pct)),color:over?C.exp:(pct>80?C.save:C.inc)};});
+  return`<div style="padding:20px 18px 120px;">
+<button id="nav-back" style="background:none;border:none;color:${C.mut};font-size:14px;font-weight:600;cursor:pointer;padding:0;margin-bottom:10px;">‹ More</button>
+<div style="font-family:${SERIF};font-size:24px;font-weight:600;color:${C.ink};letter-spacing:-0.01em;margin-bottom:16px;text-align:center;">Insights</div>
+<div style="display:flex;gap:7px;margin-bottom:20px;flex-wrap:wrap;">
+  ${rangeDefs.map(([k,l])=>`<button class="chip range-chip" data-range="${k}" style="border:1px solid ${S.range===k?A:C.line};background:${S.range===k?A:C.surf};color:${S.range===k?'#fff':C.mut};">${esc(l)}</button>`).join('')}
+</div>
+${S.range==='custom'?`<div style="display:flex;gap:10px;margin-bottom:18px;"><div style="flex:1;"><div style="font-size:11px;color:${C.mut};font-weight:600;margin-bottom:5px;">From</div><input id="ins-from" type="date" value="${esc(S.customFrom)}" style="width:100%;background:${C.inset};border:1px solid ${C.line};border-radius:11px;padding:10px;color:${C.ink};font-size:13px;"></div><div style="flex:1;"><div style="font-size:11px;color:${C.mut};font-weight:600;margin-bottom:5px;">To</div><input id="ins-to" type="date" value="${esc(S.customTo)}" style="width:100%;background:${C.inset};border:1px solid ${C.line};border-radius:11px;padding:10px;color:${C.ink};font-size:13px;"></div></div>`:''}
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+  <div style="background:${C.surf};border:1px solid ${C.line};border-radius:16px;padding:15px;box-shadow:0 1px 2px rgba(92,60,18,0.04);"><div style="font-size:11.5px;color:${C.inc};font-weight:700;">Earned</div><div style="font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:700;color:${C.ink};margin-top:5px;">${esc(fmt(rE))}</div></div>
+  <div style="background:${C.surf};border:1px solid ${C.line};border-radius:16px;padding:15px;box-shadow:0 1px 2px rgba(92,60,18,0.04);"><div style="font-size:11.5px;color:${C.exp};font-weight:700;">Spent</div><div style="font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:700;color:${C.ink};margin-top:5px;">${esc(fmt(rS))}</div></div>
+  <div style="background:${C.surf};border:1px solid ${C.line};border-radius:16px;padding:15px;box-shadow:0 1px 2px rgba(92,60,18,0.04);"><div style="font-size:11.5px;color:${C.save};font-weight:700;">Saved</div><div style="font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:700;color:${C.ink};margin-top:5px;">${esc(fmt(rSv))}</div></div>
+  <div style="background:linear-gradient(150deg,${A} 0%,${darken(A)} 100%);border-radius:16px;padding:15px;box-shadow:0 6px 16px ${hexA(A,0.32)};"><div style="font-size:11.5px;color:rgba(255,255,255,0.9);font-weight:600;">Savings rate</div><div style="font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:700;color:#fff;margin-top:5px;">${rRate}%</div></div>
+</div>
+<div style="background:${C.surf};border:1px solid ${C.line};border-radius:18px;padding:18px 16px 14px;margin-top:18px;box-shadow:0 1px 2px rgba(92,60,18,0.04);">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;"><div style="font-size:14px;font-weight:700;color:${C.ink};">6-month trend</div><div style="display:flex;gap:12px;font-size:11px;font-weight:600;"><span style="color:${C.inc};">● In</span><span style="color:${C.exp};">● Out</span></div></div>
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;height:130px;gap:6px;">
+    ${trend.map(m=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end;"><div style="display:flex;align-items:flex-end;gap:4px;height:108px;"><div title="${esc(m.incFmt)}" style="width:11px;border-radius:4px 4px 2px 2px;background:${C.inc};height:${m.incH}px;"></div><div title="${esc(m.expFmt)}" style="width:11px;border-radius:4px 4px 2px 2px;background:${C.exp};height:${m.expH}px;"></div></div><div style="font-size:10.5px;color:${C.mut};font-weight:600;">${esc(m.label)}</div></div>`).join('')}
+  </div>
+</div>
+<div style="font-family:${SERIF};font-size:17px;font-weight:600;color:${C.ink};margin:24px 2px 14px;">Where it went</div>
+${catRows.length?`<div style="display:flex;flex-direction:column;gap:15px;">${catRows.map(c=>`<div><div style="display:flex;justify-content:space-between;margin-bottom:7px;align-items:center;"><span style="font-size:13.5px;font-weight:600;color:${C.ink2};">${esc(c.cat)}</span><span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:${C.mut};">${esc(c.amountFmt)} · ${c.pct}%</span></div><div class="progress-bar"><div class="progress-fill" style="width:${c.width}%;background:${c.color};"></div></div></div>`).join('')}</div>`:`<div style="color:${C.mut};font-size:13px;padding:14px 0;">No spending in this period.</div>`}
+${budgetRows.length?`<div style="font-family:${SERIF};font-size:17px;font-weight:600;color:${C.ink};margin:26px 2px 14px;">Budgets · ${esc(now.toLocaleDateString(undefined,{month:'long'}))}</div><div style="display:flex;flex-direction:column;gap:14px;">${budgetRows.map(b=>`<div><div style="display:flex;justify-content:space-between;margin-bottom:7px;align-items:center;"><span style="font-size:13.5px;font-weight:600;color:${C.ink2};">${esc(b.cat)}</span><span style="font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:600;color:${b.color};">${esc(b.spentFmt)} / ${esc(b.limitFmt)}</span></div><div class="progress-bar"><div class="progress-fill" style="width:${b.width}%;background:${b.color};"></div></div></div>`).join('')}</div>`:''}
+</div>`;
+}
+
+// ── RENDER: SAVINGS ──
+function renderSavings(){
+  const A=S.accent;const totSaved=S.buckets.reduce((a,b)=>a+bucketVal(b),0);
+  const rows=S.buckets.map(b=>{const v=bucketVal(b);const hasGoal=b.goal>0;const pct=hasGoal?v/b.goal*100:0;return{id:b.id,name:b.name,vFmt:fmt(v),gFmt:fmt(b.goal),hasGoal,pct:Math.round(pct),width:Math.min(100,Math.round(pct)),color:b.color};});
+  return`<div style="padding:20px 18px 120px;">
+<button id="nav-back" style="background:none;border:none;color:${C.mut};font-size:14px;font-weight:600;cursor:pointer;padding:0;margin-bottom:10px;">‹ More</button>
+<div style="font-family:${SERIF};font-size:24px;font-weight:600;color:${C.ink};letter-spacing:-0.01em;margin-bottom:18px;text-align:center;">Savings &amp; goals</div>
+<div style="border-radius:22px;padding:24px 22px;background:linear-gradient(150deg,#3A2C12 0%,#231908 100%);box-shadow:0 16px 38px rgba(40,28,8,0.38);margin-bottom:20px;position:relative;overflow:hidden;">
+  <div style="position:absolute;top:-40px;right:-30px;width:150px;height:150px;border-radius:50%;background:#C9A24A;opacity:0.18;filter:blur(20px);"></div>
+  <div style="font-size:12px;color:#D8B85A;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;position:relative;">Total saved across buckets</div>
+  <div style="font-family:'JetBrains Mono',monospace;font-size:34px;font-weight:700;color:#EFCD72;margin-top:6px;position:relative;">${esc(fmt(totSaved))}</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:13px;">
+  ${rows.map(b=>`<div style="background:${C.surf};border:1px solid ${C.line};border-radius:18px;padding:17px;box-shadow:0 1px 2px rgba(92,60,18,0.04);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;">
+      <div style="display:flex;align-items:center;gap:11px;"><div style="width:12px;height:12px;border-radius:4px;background:${b.color};"></div><span style="font-size:15px;font-weight:700;color:${C.ink};">${esc(b.name)}</span></div>
+      <button class="contribute-btn" data-bid="${esc(b.id)}" style="background:${C.surf2};border:1px solid ${C.line};color:${C.ink2};font-size:12.5px;font-weight:700;padding:7px 12px;border-radius:10px;cursor:pointer;">+ Add</button>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px;"><span style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;color:${C.ink};">${esc(b.vFmt)}</span><span style="font-size:12px;color:${C.mut};font-weight:600;">${b.hasGoal?'of '+esc(b.gFmt)+' · '+b.pct+'%':'No goal set'}</span></div>
+    ${b.hasGoal?`<div class="progress-bar"><div class="progress-fill" style="width:${b.width}%;background:${b.color};"></div></div>`:''}
+  </div>`).join('')}
+</div>
+<button id="go-add-bucket" style="width:100%;margin-top:16px;background:${C.surf};border:1.5px dashed ${hexA(C.save,0.5)};color:${C.goldDeep};font-size:14px;font-weight:700;padding:15px;border-radius:16px;cursor:pointer;">+ New savings bucket</button>
+</div>`;
+}
+
+// ── RENDER: MORE ──
+function renderMore(){
+  const A=S.accent;const v=S.moreView;
+  if(v===null){
+    const totSaved=S.buckets.reduce((a,b)=>a+bucketVal(b),0);
+    const menu=[{label:'Savings & goals',sub:S.buckets.length+' buckets · '+fmt(totSaved)+' saved',icon:'◈',mid:'menu-savings'},{label:'Insights',sub:'Charts, trends & breakdown',icon:'▦',mid:'menu-insights'},{label:'Tax planner',sub:'Old vs new regime · FY '+fyLabel(currentFYStart()-1),icon:'₹',mid:'menu-tax'},{label:'Currency',sub:S.currency.code+' · '+sym(),icon:sym(),mid:'menu-currency'},{label:'Categories',sub:(S.categories.expense.length+S.categories.income.length)+' categories',icon:'☰',mid:'menu-categories'},{label:'Budgets',sub:Object.keys(S.budgets).length+' limits set',icon:'◐',mid:'menu-budgets'},{label:'Recurring',sub:(S.recurring||[]).length+' auto entries',icon:'↻',mid:'menu-recurring'},{label:'Themes',sub:(THEMES.find(t=>t.color===A)||{}).name||'Custom',icon:'◑',mid:'menu-theme'}];
+    return`<div style="padding:20px 18px 120px;"><div style="font-family:${SERIF};font-size:24px;font-weight:600;color:${C.ink};letter-spacing:-0.01em;margin-bottom:18px;">Settings</div>
+${S.user?`<div style="display:flex;align-items:center;gap:13px;background:${C.surf};border:1px solid ${C.line};border-radius:16px;padding:14px;margin-bottom:14px;box-shadow:0 1px 2px rgba(92,60,18,0.04);">
+  ${S.user.picture?`<img src="${esc(S.user.picture)}" referrerpolicy="no-referrer" alt="" style="width:44px;height:44px;border-radius:50%;flex-shrink:0;">`:`<div style="width:44px;height:44px;border-radius:50%;flex-shrink:0;background:${hexA(A,0.15)};color:${A};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;">${esc((S.user.name||'U').charAt(0).toUpperCase())}</div>`}
+  <div style="flex:1;min-width:0;"><div style="font-size:15px;font-weight:700;color:${C.ink};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(S.user.name||'Signed in')}</div><div style="font-size:12px;color:${C.mut};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(S.user.email||'')}</div></div>
+  <button id="sign-out" style="background:${hexA(C.exp,0.1)};border:none;color:${C.exp};font-size:12.5px;font-weight:700;padding:8px 12px;border-radius:10px;cursor:pointer;">Sign out</button>
+</div>`:`<div style="display:flex;align-items:center;gap:13px;background:${C.surf};border:1px solid ${C.line};border-radius:16px;padding:14px;margin-bottom:14px;box-shadow:0 1px 2px rgba(92,60,18,0.04);">
+  <div style="width:44px;height:44px;border-radius:50%;flex-shrink:0;background:${hexA(A,0.15)};color:${A};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;">G</div>
+  <div style="flex:1;min-width:0;"><div style="font-size:14.5px;font-weight:700;color:${C.ink};">Guest</div><div style="font-size:12px;color:${C.mut};">Not signed in</div></div>
+  <button id="go-signin" style="background:${A};border:none;color:#fff;font-size:12.5px;font-weight:700;padding:8px 12px;border-radius:10px;cursor:pointer;">Sign in</button>
+</div>`}
+<div style="display:flex;flex-direction:column;gap:2px;">
+  ${menu.map(i=>`<button id="${i.mid}" class="menu-btn"><div style="width:38px;height:38px;border-radius:11px;background:${hexA(A,0.12)};display:flex;align-items:center;justify-content:center;color:${A};font-size:16px;font-weight:700;">${esc(i.icon)}</div><div style="flex:1;"><div style="font-size:14.5px;font-weight:600;color:${C.ink};">${esc(i.label)}</div><div style="font-size:12px;color:${C.mut};margin-top:1px;">${esc(i.sub)}</div></div><span style="color:${C.faint};font-size:18px;">›</span></button>`).join('')}
+</div>
+<button id="export-csv" style="width:100%;margin-top:14px;background:${A};border:none;color:#fff;font-size:14px;font-weight:700;padding:15px;border-radius:14px;cursor:pointer;box-shadow:0 8px 20px ${hexA(A,0.3)};">Export all data (CSV)</button>
+<button id="backup-download" style="width:100%;margin-top:10px;background:${C.surf};border:1px solid ${C.line};color:${C.ink2};font-size:13.5px;font-weight:700;padding:13px;border-radius:14px;cursor:pointer;">⬇ Download backup (.json)</button>
+<button id="backup-restore" style="width:100%;margin-top:8px;background:${C.surf};border:1px solid ${C.line};color:${C.ink2};font-size:13.5px;font-weight:700;padding:13px;border-radius:14px;cursor:pointer;">⬆ Restore from backup</button>
+<button id="reset-data" style="width:100%;margin-top:10px;background:none;border:1px solid ${hexA(C.exp,0.4)};color:${C.exp};font-size:13.5px;font-weight:600;padding:13px;border-radius:14px;cursor:pointer;">Reset all data</button>
+<div style="text-align:center;color:${C.faint};font-size:11px;margin-top:18px;">Stored privately on this device.</div></div>`;
+  }
+  if(v==='currency'){
+    const cq=S.curSearch.trim().toLowerCase();
+    const list=CUR.filter(([code,name])=>!cq||code.toLowerCase().includes(cq)||name.toLowerCase().includes(cq)).map(([code,name])=>{const s=symFor(code);const active=S.currency.code===code;return{code,name,s,active,bg:active?hexA(A,0.12):C.surf,border:active?A:C.line}});
+    return`<div style="padding:20px 18px 120px;"><button id="go-more-main" style="background:none;border:none;color:${C.mut};font-size:14px;font-weight:600;cursor:pointer;padding:0;margin-bottom:14px;">‹ Settings</button><div style="font-family:${SERIF};font-size:22px;font-weight:600;color:${C.ink};margin-bottom:16px;">Currency</div>
+<input id="cur-search" value="${esc(S.curSearch)}" placeholder="Search currency…" style="width:100%;background:${C.inset};border:1px solid ${C.line};border-radius:12px;padding:12px 14px;color:${C.ink};font-size:14px;margin-bottom:14px;">
+<div style="display:flex;flex-direction:column;gap:4px;">
+  ${list.map(c=>`<button class="pick-currency" data-code="${esc(c.code)}" style="display:flex;align-items:center;gap:12px;background:${c.bg};border:1px solid ${c.border};border-radius:12px;padding:12px 14px;cursor:pointer;text-align:left;width:100%;"><span style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;color:${C.ink};width:34px;">${esc(c.s)}</span><div style="flex:1;"><div style="font-size:14px;font-weight:600;color:${C.ink};">${esc(c.code)}</div><div style="font-size:11.5px;color:${C.mut};">${esc(c.name)}</div></div><span style="color:${A};font-weight:700;">${c.active?'✓':''}</span></button>`).join('')}
+</div></div>`;
+  }
+  if(v==='categories'){
+    return`<div style="padding:20px 18px 120px;"><button id="go-more-main" style="background:none;border:none;color:${C.mut};font-size:14px;font-weight:600;cursor:pointer;padding:0;margin-bottom:14px;">‹ Settings</button><div style="font-family:${SERIF};font-size:22px;font-weight:600;color:${C.ink};margin-bottom:16px;">Categories</div>
+<div style="display:flex;gap:8px;margin-bottom:14px;">
+  <input id="cat-input" value="${esc(S.catInput)}" placeholder="New category name" style="flex:1;background:${C.inset};border:1px solid ${C.line};border-radius:12px;padding:11px 13px;color:${C.ink};font-size:14px;">
+  <button id="toggle-cat-type" style="background:${C.surf2};border:1px solid ${C.line};color:${C.ink2};font-size:12.5px;font-weight:700;padding:0 14px;border-radius:12px;cursor:pointer;">${S.catType==='expense'?'Expense':'Income'}</button>
+  <button id="add-category" style="background:${A};border:none;color:#fff;font-size:18px;font-weight:700;width:46px;border-radius:12px;cursor:pointer;">+</button>
+</div>
+<div style="font-size:12px;color:${C.mut};font-weight:700;text-transform:uppercase;letter-spacing:0.04em;margin:10px 2px;">Expense</div>
+<div style="display:flex;flex-wrap:wrap;gap:8px;">${(S.categories.expense||[]).map(c=>`<span style="display:inline-flex;align-items:center;gap:7px;background:${C.surf2};border:1px solid ${C.line};border-radius:11px;padding:8px 11px;font-size:13px;color:${C.ink2};font-weight:600;">${esc(c)} <span class="remove-cat" data-ctype="expense" data-cname="${esc(c)}" style="color:${C.faint};cursor:pointer;font-size:14px;">✕</span></span>`).join('')}</div>
+<div style="font-size:12px;color:${C.mut};font-weight:700;text-transform:uppercase;letter-spacing:0.04em;margin:18px 2px 10px;">Income</div>
+<div style="display:flex;flex-wrap:wrap;gap:8px;">${(S.categories.income||[]).map(c=>`<span style="display:inline-flex;align-items:center;gap:7px;background:${C.surf2};border:1px solid ${C.line};border-radius:11px;padding:8px 11px;font-size:13px;color:${C.ink2};font-weight:600;">${esc(c)} <span class="remove-cat" data-ctype="income" data-cname="${esc(c)}" style="color:${C.faint};cursor:pointer;font-size:14px;">✕</span></span>`).join('')}</div>
+</div>`;
+  }
+  if(v==='budgets'){
+    const budgetEdit=(S.categories.expense||[]).map(c=>({cat:c,limit:S.budgets[c]||''}));
+    return`<div style="padding:20px 18px 120px;"><button id="go-more-main" style="background:none;border:none;color:${C.mut};font-size:14px;font-weight:600;cursor:pointer;padding:0;margin-bottom:14px;">‹ Settings</button><div style="font-family:${SERIF};font-size:22px;font-weight:600;color:${C.ink};margin-bottom:6px;">Monthly budgets</div><div style="font-size:12.5px;color:${C.mut};margin-bottom:18px;">Set a limit per category. Leave 0 for no limit.</div>
+<div style="display:flex;flex-direction:column;gap:9px;">${budgetEdit.map(b=>`<div style="display:flex;align-items:center;gap:12px;background:${C.surf};border:1px solid ${C.line};border-radius:13px;padding:10px 14px;"><span style="flex:1;font-size:14px;font-weight:600;color:${C.ink};">${esc(b.cat)}</span><span style="font-family:'JetBrains Mono',monospace;color:${C.mut};font-size:13px;">${esc(sym())}</span><input class="budget-input" data-bcat="${esc(b.cat)}" type="number" value="${esc(String(b.limit))}" placeholder="0" style="width:110px;background:${C.inset};border:1px solid ${C.line};border-radius:10px;padding:9px 11px;color:${C.ink};font-size:14px;font-family:'JetBrains Mono',monospace;text-align:right;"></div>`).join('')}
+</div></div>`;
+  }
+  if(v==='recurring'){
+    const rt=S.recFormType;
+    const rows=(S.recurring||[]).map(r=>({id:r.id,cat:r.category,day:r.day,tLabel:r.type==='income'?'Income':'Expense',aFmt:(r.type==='income'?'+':'-')+' '+fmt(r.amount),init:r.category.charAt(0).toUpperCase(),tint:r.type==='income'?C.inc:C.exp,tintBg:hexA(r.type==='income'?C.inc:C.exp,0.13)}));
+    return`<div style="padding:20px 18px 120px;"><button id="go-more-main" style="background:none;border:none;color:${C.mut};font-size:14px;font-weight:600;cursor:pointer;padding:0;margin-bottom:14px;">‹ Settings</button><div style="font-family:${SERIF};font-size:22px;font-weight:600;color:${C.ink};margin-bottom:6px;">Recurring</div><div style="font-size:12.5px;color:${C.mut};margin-bottom:16px;">These post automatically each month on their day.</div>
+${rows.length?`<div style="display:flex;flex-direction:column;gap:9px;margin-bottom:18px;">${rows.map(r=>`<div style="display:flex;align-items:center;gap:12px;background:${C.surf};border:1px solid ${C.line};border-radius:14px;padding:13px 14px;"><div style="width:36px;height:36px;border-radius:10px;background:${r.tintBg};color:${r.tint};display:flex;align-items:center;justify-content:center;font-weight:700;">${esc(r.init)}</div><div style="flex:1;"><div style="font-size:14px;font-weight:600;color:${C.ink};">${esc(r.cat)}</div><div style="font-size:11.5px;color:${C.mut};">Day ${r.day} · ${esc(r.tLabel)}</div></div><span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:${r.tint};font-size:14px;">${esc(r.aFmt)}</span><span class="remove-recurring" data-rid="${esc(r.id)}" style="color:${C.faint};cursor:pointer;font-size:16px;">✕</span></div>`).join('')}</div>`:''}
+<div style="background:${C.surf};border:1px solid ${C.line};border-radius:16px;padding:15px;">
+  <div style="font-size:13px;font-weight:700;color:${C.ink2};margin-bottom:12px;">Add recurring</div>
+  <div style="display:flex;gap:8px;margin-bottom:9px;">
+    <button id="rec-expense" style="flex:1;padding:9px;border-radius:10px;font-size:12.5px;font-weight:700;cursor:pointer;border:1px solid ${rt==='expense'?C.exp:C.line};background:${rt==='expense'?C.exp:'transparent'};color:${rt==='expense'?'#fff':C.mut};">Expense</button>
+    <button id="rec-income" style="flex:1;padding:9px;border-radius:10px;font-size:12.5px;font-weight:700;cursor:pointer;border:1px solid ${rt==='income'?C.inc:C.line};background:${rt==='income'?C.inc:'transparent'};color:${rt==='income'?'#fff':C.mut};">Income</button>
+  </div>
+  <input id="rec-cat" value="${esc(S.recForm.category)}" placeholder="Category (e.g. Rent)" style="width:100%;background:${C.inset};border:1px solid ${C.line};border-radius:10px;padding:10px 12px;color:${C.ink};font-size:13.5px;margin-bottom:9px;">
+  <div style="display:flex;gap:8px;">
+    <input id="rec-amt" type="number" value="${esc(String(S.recForm.amount))}" placeholder="Amount" style="flex:1;background:${C.inset};border:1px solid ${C.line};border-radius:10px;padding:10px 12px;color:${C.ink};font-size:13.5px;font-family:'JetBrains Mono',monospace;">
+    <input id="rec-day" type="number" value="${esc(String(S.recForm.day))}" placeholder="Day" min="1" max="28" style="width:80px;background:${C.inset};border:1px solid ${C.line};border-radius:10px;padding:10px 12px;color:${C.ink};font-size:13.5px;font-family:'JetBrains Mono',monospace;">
+  </div>
+  <button id="add-recurring" style="width:100%;margin-top:11px;background:${A};border:none;color:#fff;font-size:13.5px;font-weight:700;padding:11px;border-radius:11px;cursor:pointer;">Add recurring</button>
+</div></div>`;
+  }
+  if(v==='theme'){
+    const themes=THEMES.map(t=>{const on=S.accent===t.color;return{...t,on,cardBg:on?hexA(t.color,0.1):C.surf,cardBorder:on?t.color:C.line,nameColor:on?t.color:C.ink,soft:hexA(t.color,0.28),check:on?'✓':''};});
+    return`<div style="padding:20px 18px 120px;"><button id="go-more-main" style="background:none;border:none;color:${C.mut};font-size:14px;font-weight:600;cursor:pointer;padding:0;margin-bottom:14px;">‹ Settings</button><div style="font-family:${SERIF};font-size:22px;font-weight:600;color:${C.ink};margin-bottom:6px;">Themes</div><div style="font-size:12.5px;color:${C.mut};margin-bottom:16px;">Pick a vibe — recolors buttons, charts and highlights across the app.</div>
+<div style="display:flex;flex-direction:column;gap:9px;">${themes.map(t=>`<button class="pick-theme" data-tcolor="${esc(t.color)}" style="display:flex;align-items:center;gap:14px;background:${t.cardBg};border:1.5px solid ${t.cardBorder};border-radius:16px;padding:13px 15px;cursor:pointer;text-align:left;width:100%;"><span style="width:44px;height:44px;border-radius:14px;flex-shrink:0;background:${t.color};box-shadow:0 6px 18px ${t.soft};display:block;"></span><span style="flex:1;"><span style="display:block;font-size:15px;font-weight:700;color:${t.nameColor};">${esc(t.name)}</span><span style="display:block;font-size:12px;color:${C.mut};margin-top:2px;">${esc(t.desc)}</span></span><span style="color:${t.color};font-size:18px;font-weight:800;width:18px;text-align:center;">${t.check}</span></button>`).join('')}
+</div></div>`;
+  }
+  return'';
+}
+
+// ── RENDER: ADD SHEET ──
+function renderAddSheet(){
+  const A=S.accent;const d=S.draft;
+  const chipSrc=d.type==='saving'?S.buckets.map(b=>({key:b.id,label:b.name})):(S.categories[d.type]||[]).map(c=>({key:c,label:c}));
+  const sel=d.type==='saving'?d.bucket:d.category;
+  const chipTint=d.type==='income'?C.inc:(d.type==='saving'?C.save:A);
+  const chips=chipSrc.map(c=>({key:c.key,label:c.label,bg:sel===c.key?hexA(chipTint,0.16):C.inset,border:sel===c.key?chipTint:C.line,color:sel===c.key?chipTint:C.mut}));
+  const amtColor=d.type==='income'?C.inc:(d.type==='saving'?C.save:C.ink);
+  const tBg=t=>d.type===t?(t==='income'?C.inc:t==='saving'?C.save:A):'transparent';
+  const tCol=t=>d.type===t?(t==='saving'?'#fff':'#fff'):C.mut;
+  const valid=(parseFloat(d.amount)||0)>0&&(d.type==='saving'?!!d.bucket:!!d.category);
+  return`<div id="sheet-overlay" class="sheet-overlay"></div>
+<div class="sheet" style="max-height:94%;overflow-y:auto;">
+  <button id="close-sheet" style="display:block;width:54px;height:22px;padding:8px 0;margin:0 auto 12px;background:none;border:none;cursor:pointer;"><span style="display:block;width:42px;height:5px;border-radius:3px;background:${hexA(C.save,0.4)};margin:0 auto;"></span></button>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+    <div style="font-family:${SERIF};font-size:19px;font-weight:600;color:${C.ink};">${S.editingId?'Edit transaction':'Add transaction'}</div>
+    ${S.editingId?`<button id="delete-tx" style="background:${hexA(C.exp,0.12)};border:none;color:${C.exp};font-size:12.5px;font-weight:700;padding:7px 12px;border-radius:10px;cursor:pointer;">Delete</button>`:''}
+  </div>
+  ${!S.editingId?`<button id="scan-bill" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;background:${C.surf2};border:1px dashed ${hexA(C.save,0.5)};color:${C.goldDeep};font-size:13px;font-weight:700;padding:11px;border-radius:12px;cursor:pointer;margin-bottom:12px;">📷 Scan from a bill (image · PDF · Word)</button>`:''}
+  ${S.scanBusy?`<div style="background:${hexA(A,0.1)};border:1px solid ${hexA(A,0.3)};border-radius:11px;padding:11px;font-size:12.5px;color:${C.ink2};margin-bottom:12px;text-align:center;">⏳ ${esc(S.scanMsg||'Reading…')}</div>`:(S.scanMsg?`<div style="background:${hexA(C.inc,0.1)};border:1px solid ${hexA(C.inc,0.3)};border-radius:11px;padding:11px;font-size:12.5px;color:${C.ink2};margin-bottom:12px;text-align:center;">${esc(S.scanMsg)}</div>`:'')}
+  <div style="display:flex;gap:7px;background:${C.inset};padding:5px;border-radius:14px;margin-bottom:18px;">
+    <button id="type-expense" style="flex:1;padding:11px;border-radius:10px;border:none;font-size:13.5px;font-weight:700;cursor:pointer;background:${tBg('expense')};color:${tCol('expense')};">Expense</button>
+    <button id="type-income" style="flex:1;padding:11px;border-radius:10px;border:none;font-size:13.5px;font-weight:700;cursor:pointer;background:${tBg('income')};color:${tCol('income')};">Income</button>
+    <button id="type-saving" style="flex:1;padding:11px;border-radius:10px;border:none;font-size:13.5px;font-weight:700;cursor:pointer;background:${tBg('saving')};color:${tCol('saving')};">Saving</button>
+  </div>
+  <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin:8px 0 20px;border-bottom:2px solid ${C.line};padding-bottom:12px;">
+    <span style="font-family:'JetBrains Mono',monospace;font-size:34px;font-weight:700;color:${amtColor};">${esc(sym())}</span>
+    <input id="sheet-amount" type="text" inputmode="decimal" autocomplete="off" value="${esc(d.amount&&d.amount!=='0'?d.amount:'')}" placeholder="0" style="width:62%;max-width:240px;border:none;background:transparent;outline:none;font-family:'JetBrains Mono',monospace;font-size:44px;font-weight:700;color:${amtColor};text-align:center;padding:0;-moz-appearance:textfield;">
+  </div>
+  <div style="font-size:12px;color:${C.mut};font-weight:700;margin:0 2px 9px;text-transform:uppercase;letter-spacing:0.04em;">${d.type==='saving'?'Save into':'Category'}</div>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">${chips.map(c=>`<button class="chip pick-chip" data-ckey="${esc(c.key)}" style="border:1px solid ${c.border};background:${c.bg};color:${c.color};">${esc(c.label)}</button>`).join('')}</div>
+  <div style="display:flex;gap:9px;margin-bottom:16px;">
+    <input id="sheet-note" value="${esc(d.note)}" placeholder="Note (optional)" style="flex:1;background:${C.inset};border:1px solid ${C.line};border-radius:12px;padding:12px 14px;color:${C.ink};font-size:14px;">
+    <input id="sheet-date" type="date" value="${esc(d.date)}" style="background:${C.inset};border:1px solid ${C.line};border-radius:12px;padding:12px;color:${C.ink2};font-size:13px;">
+  </div>
+  <button id="save-tx" style="width:100%;margin-top:14px;background:${valid?A:C.inset};border:none;color:${valid?'#fff':C.faint};font-size:16px;font-weight:700;padding:17px;border-radius:16px;cursor:pointer;box-shadow:${valid?'0 10px 24px '+hexA(A,0.32):'none'};">${d.type==='saving'?'Add to savings':d.type==='income'?'Add income':'Add expense'}</button>
+</div>`;
+}
+
+// ── RENDER: BUCKET SHEET ──
+function renderBucketSheet(){
+  const A=S.accent;const f=S.bucketForm;
+  const colors=THEMES.map(t=>({color:t.color,border:f.color===t.color?C.ink:'transparent'}));
+  return`<div id="bucket-overlay" class="sheet-overlay"></div>
+<div class="sheet">
+  <button id="close-bucket" style="display:block;width:54px;height:22px;padding:8px 0;margin:0 auto 12px;background:none;border:none;cursor:pointer;"><span style="display:block;width:42px;height:5px;border-radius:3px;background:${hexA(C.save,0.4)};margin:0 auto;"></span></button>
+  <div style="font-family:${SERIF};font-size:19px;font-weight:600;color:${C.ink};margin-bottom:16px;">New savings bucket</div>
+  <input id="bucket-name" value="${esc(f.name)}" placeholder="Name (e.g. SIP, Gold, FD, Crypto)" style="width:100%;background:${C.inset};border:1px solid ${C.line};border-radius:12px;padding:13px 14px;color:${C.ink};font-size:14.5px;margin-bottom:10px;">
+  <div style="display:flex;gap:9px;margin-bottom:14px;">
+    <div style="flex:1;"><div style="font-size:11.5px;color:${C.mut};font-weight:600;margin-bottom:5px;">Already saved</div><input id="bucket-base" type="number" value="${esc(String(f.base))}" placeholder="0" style="width:100%;background:${C.inset};border:1px solid ${C.line};border-radius:12px;padding:12px;color:${C.ink};font-size:14px;font-family:'JetBrains Mono',monospace;"></div>
+    <div style="flex:1;"><div style="font-size:11.5px;color:${C.mut};font-weight:600;margin-bottom:5px;">Goal</div><input id="bucket-goal" type="number" value="${esc(String(f.goal))}" placeholder="0" style="width:100%;background:${C.inset};border:1px solid ${C.line};border-radius:12px;padding:12px;color:${C.ink};font-size:14px;font-family:'JetBrains Mono',monospace;"></div>
+  </div>
+  <div style="font-size:11.5px;color:${C.mut};font-weight:600;margin-bottom:8px;">Color</div>
+  <div style="display:flex;gap:10px;margin-bottom:18px;">${colors.map(c=>`<button class="pick-bucket-color" data-bcolor="${esc(c.color)}" style="width:38px;height:38px;border-radius:12px;cursor:pointer;background:${c.color};border:3px solid ${c.border};"></button>`).join('')}</div>
+  <button id="save-bucket" style="width:100%;background:${A};border:none;color:#fff;font-size:15px;font-weight:700;padding:16px;border-radius:16px;cursor:pointer;box-shadow:0 10px 24px ${hexA(A,0.3)};">Create bucket</button>
+</div>`;
+}
+
+// ── RENDER: SEARCH ──
+function renderSearch(){
+  const q=S.searchText.trim().toLowerCase();
+  const sorted=S.tx.slice().sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:b.id-a.id);
+  const results=(q?sorted.filter(t=>(t.category||'').toLowerCase().includes(q)||(t.note||'').toLowerCase().includes(q)||String(t.amount).includes(q)):sorted.slice(0,40)).map(mapTx);
+  return`<div class="search-overlay">
+  <div style="padding:16px 16px 12px;display:flex;gap:10px;align-items:center;border-bottom:1px solid ${C.line};">
+    <input id="search-input" value="${esc(S.searchText)}" placeholder="Search transactions…" style="flex:1;background:${C.surf2};border:1px solid ${C.line};border-radius:12px;padding:12px 14px;color:${C.ink};font-size:14.5px;">
+    <button id="close-search" style="background:none;border:none;color:${C.mut};font-size:14px;font-weight:600;cursor:pointer;">Close</button>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding:8px 16px 30px;">${results.map(t=>`<button class="tx-row" data-edit="${esc(t.sid)}" style="border-bottom:1px solid ${C.line2};"><div style="width:40px;height:40px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:700;background:${t.tintBg};color:${t.tint};">${esc(t.initial)}</div><div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:600;color:${C.ink};">${esc(t.category)}</div><div style="font-size:12px;color:${C.mut};">${esc(t.sub)} · ${esc(t.dateFmt)}</div></div><span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:${t.amtColor};font-size:14px;">${esc(t.amountFmt)}</span></button>`).join('')}</div>
+</div>`;
+}
+
+// ── RENDER: TRANSACTIONS ──
+function renderTransactions(){
+  const sorted=S.tx.slice().sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:b.id-a.id).map(mapTx);
+  const row=t=>`<div class="tx-swipe"><button class="tx-del" data-del="${esc(t.sid)}">🗑 Delete</button><button class="tx-row tx-rowswipe" data-edit="${esc(t.sid)}"><div style="width:42px;height:42px;border-radius:13px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;background:${t.tintBg};color:${t.tint};">${esc(t.initial)}</div><div style="flex:1;min-width:0;"><div style="font-size:14.5px;font-weight:600;color:${C.ink};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(t.category)}</div><div style="font-size:12px;color:${C.mut};margin-top:2px;">${esc(t.sub)}</div></div><div style="text-align:right;flex-shrink:0;"><div style="font-family:'JetBrains Mono',monospace;font-size:14.5px;font-weight:700;color:${t.amtColor};">${esc(t.amountFmt)}</div><div style="font-size:11px;color:${C.faint};margin-top:2px;">${esc(t.dateFmt)}</div></div></button></div>`;
+  return`<div style="padding:20px 18px 120px;">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+  <div style="font-family:${SERIF};font-size:24px;font-weight:600;color:${C.ink};letter-spacing:-0.01em;">Transactions</div>
+  ${S.tx.length?`<button id="go-search" style="display:flex;align-items:center;gap:6px;background:${C.surf};border:1px solid ${C.line};color:${C.ink2};font-size:12.5px;font-weight:700;padding:8px 12px;border-radius:11px;cursor:pointer;">🔍 Search</button>`:''}
+</div>
+${sorted.length?`<div style="font-size:12px;color:${C.mut};font-weight:600;margin:0 2px 10px;">${sorted.length} ${sorted.length===1?'entry':'entries'} · newest first · swipe left to delete</div><div style="display:flex;flex-direction:column;gap:4px;">${sorted.map(row).join('')}</div>`:`<div style="text-align:center;padding:60px 20px;color:${C.mut};font-size:13.5px;">No transactions yet.<br>Tap the + button to add your first one.</div>`}
+</div>`;
+}
+
+// ── RENDER: TAX ──
+function renderTax(){
+  const A=S.accent;const fy=activeFY();const[fa,fb]=fyBounds(fy);
+  const fyTx=S.tx.filter(t=>t.date>=fa&&t.date<=fb);
+  const earned=sumTx(fyTx,'income');
+  const gross=S.taxGross!==''?(parseFloat(S.taxGross)||0):earned;
+  // 80C hint from retirement/tax-saving savings within the FY
+  const c80=Math.min(150000,fyTx.filter(t=>t.type==='saving'&&/epf|pf|ppf|sip|elss|lic|nsc|nps/i.test((t.category||'')+(t.note||''))).reduce((a,t)=>a+(+t.amount||0),0));
+  const deduct=S.taxDeduct!==''?(parseFloat(S.taxDeduct)||0):c80;
+  const r=computeTax(gross,S.taxSalaried,deduct);
+  const better=r.totalNew<=r.totalOld?'new':'old';
+  const saving=Math.abs(r.totalNew-r.totalOld);
+  const card=(title,t,reco)=>`<div style="flex:1;background:${reco?'linear-gradient(150deg,'+A+' 0%,'+darken(A)+' 100%)':C.surf};border:1px solid ${reco?'transparent':C.line};border-radius:18px;padding:16px;box-shadow:${reco?'0 10px 24px '+hexA(A,0.3):'0 1px 2px rgba(92,60,18,0.04)'};">
+    <div style="font-size:12px;font-weight:700;color:${reco?'rgba(255,255,255,.9)':C.mut};">${title}${reco?' ✓':''}</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:23px;font-weight:700;color:${reco?'#fff':C.ink};margin-top:6px;">${esc(fmt(t.total))}</div>
+    <div style="font-size:11px;color:${reco?'rgba(255,255,255,.8)':C.mut};margin-top:7px;line-height:1.5;">Taxable ${esc(fmt(t.taxable))}<br>Tax ${esc(fmt(t.base))} + cess/sur ${esc(fmt(t.cess))}</div>
+  </div>`;
+  return`<div style="padding:20px 18px 120px;">
+<button id="tax-back" style="background:none;border:none;color:${C.mut};font-size:14px;font-weight:600;cursor:pointer;padding:0;margin-bottom:10px;">‹ More</button>
+<div style="font-family:${SERIF};font-size:24px;font-weight:600;color:${C.ink};letter-spacing:-0.01em;margin-bottom:4px;text-align:center;">Tax planner</div>
+<div style="font-size:12px;color:${C.mut};text-align:center;margin-bottom:16px;">India · FY ${esc(fy)} (AY ${esc(fyLabel(fyStartYearOf(fy)+1))})</div>
+<div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px;justify-content:center;">
+  ${fyList().map(l=>`<button class="tax-fy chip" data-fy="${l}" style="border:1px solid ${fy===l?A:C.line};background:${fy===l?A:C.surf};color:${fy===l?'#fff':C.mut};">FY ${esc(l)}</button>`).join('')}
+</div>
+<div style="background:${C.surf};border:1px solid ${C.line};border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 1px 2px rgba(92,60,18,0.04);">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><span style="font-size:13px;font-weight:700;color:${C.ink2};">Income logged this FY</span><span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:${C.inc};">${esc(fmt(earned))}</span></div>
+  <div style="font-size:11.5px;color:${C.mut};font-weight:600;margin-bottom:5px;">Gross annual income (₹) — edit if needed</div>
+  <input id="tax-gross" type="number" value="${esc(S.taxGross!==''?S.taxGross:String(Math.round(earned)))}" placeholder="0" style="width:100%;background:${C.inset};border:1px solid ${C.line};border-radius:11px;padding:11px 13px;color:${C.ink};font-size:15px;font-family:'JetBrains Mono',monospace;margin-bottom:12px;">
+  <label style="display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:12px;"><input id="tax-salaried" type="checkbox" ${S.taxSalaried?'checked':''} style="width:18px;height:18px;accent-color:${A};"><span style="font-size:13.5px;color:${C.ink2};font-weight:600;">I'm salaried (standard deduction)</span></label>
+  <div style="font-size:11.5px;color:${C.mut};font-weight:600;margin-bottom:5px;">Old-regime deductions — 80C, 80D, home-loan etc. (₹)</div>
+  <input id="tax-deduct" type="number" value="${esc(S.taxDeduct!==''?S.taxDeduct:String(Math.round(c80)))}" placeholder="0" style="width:100%;background:${C.inset};border:1px solid ${C.line};border-radius:11px;padding:11px 13px;color:${C.ink};font-size:15px;font-family:'JetBrains Mono',monospace;">
+  ${c80>0?`<div style="font-size:11px;color:${C.goldDeep};margin-top:7px;">💡 Your EPF/PPF/SIP this FY (~${esc(fmt(c80))}) may count under 80C (max ₹1.5L).</div>`:''}
+</div>
+<div style="display:flex;gap:11px;margin-bottom:14px;">
+  ${card('New regime',{total:r.totalNew,taxable:r.taxableNew,base:r.baseNew,cess:r.cessNew},better==='new')}
+  ${card('Old regime',{total:r.totalOld,taxable:r.taxableOld,base:r.baseOld,cess:r.cessOld},better==='old')}
+</div>
+<div style="background:${hexA(A,0.1)};border:1px solid ${hexA(A,0.3)};border-radius:16px;padding:15px;margin-bottom:16px;text-align:center;">
+  <div style="font-size:13px;color:${C.ink2};font-weight:600;">Recommended: <b style="color:${C.ink};">${better==='new'?'New':'Old'} regime</b></div>
+  ${saving>0?`<div style="font-size:12.5px;color:${C.mut};margin-top:4px;">Saves you about <b style="color:${C.inc};">${esc(fmt(saving))}</b> vs the other regime.</div>`:`<div style="font-size:12.5px;color:${C.mut};margin-top:4px;">Both regimes work out the same here.</div>`}
+</div>
+<button id="tax-export" style="width:100%;background:${A};border:none;color:#fff;font-size:14px;font-weight:700;padding:14px;border-radius:14px;cursor:pointer;box-shadow:0 8px 20px ${hexA(A,0.3)};">Export tax summary (CSV)</button>
+<div style="background:${C.surf};border:1px solid ${C.line};border-radius:16px;padding:15px;margin-top:16px;">
+  <div style="font-size:13px;font-weight:700;color:${C.ink};margin-bottom:9px;">FY 2025-26 quick reference</div>
+  <div style="font-size:11.5px;color:${C.ink2};line-height:1.7;">
+    <b>New regime (default):</b> nil up to ₹4L, then 5/10/15/20/25/30% to ₹24L+. Std. deduction ₹75k. 87A rebate → <b>no tax up to ₹12L</b> taxable (₹12.75L if salaried).<br>
+    <b>Old regime:</b> nil up to ₹2.5L, 5% to ₹5L, 20% to ₹10L, 30% above. Std. deduction ₹50k, plus 80C/80D etc. 87A → nil up to ₹5L.<br>
+    Both add 4% health &amp; education cess (plus surcharge on high incomes). ITR due ~31 Jul ${fyStartYearOf(fy)+1}.
+  </div>
+</div>
+<div style="text-align:center;color:${C.faint};font-size:10.5px;margin-top:14px;line-height:1.6;">Estimate only — for general planning, not tax advice.<br>Verify with a professional / the Income Tax portal before filing.</div>
+</div>`;
+}
+
+// ── RENDER: SIGN-IN GATE ──
+function renderGate(){
+  const A=S.accent;
+  document.getElementById('phone').innerHTML=`
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:34px 26px;text-align:center;">
+  <img src="icons/icon-192.png" alt="" style="width:96px;height:96px;border-radius:24px;box-shadow:0 16px 40px rgba(92,60,18,0.3);margin-bottom:22px;">
+  <div style="font-family:${SERIF};font-size:30px;font-weight:600;color:${C.ink};letter-spacing:-0.01em;">Desi <span style="color:${C.save};">Finance</span></div>
+  <div style="font-size:14px;color:${C.mut};margin-top:10px;line-height:1.6;max-width:290px;">Private money tracking for India — income, expenses, savings &amp; tax, all in one place.</div>
+  <div id="g-btn" style="margin-top:30px;display:flex;justify-content:center;min-height:44px;"></div>
+  ${GOOGLE_CLIENT_ID?'':`<div style="font-size:11.5px;color:${C.faint};margin-top:6px;max-width:280px;line-height:1.5;">Google sign-in isn’t configured yet — add your Client ID to enable it.</div>`}
+  <button id="guest-btn" style="margin-top:20px;background:none;border:none;color:${C.mut};font-size:13.5px;font-weight:700;cursor:pointer;text-decoration:underline;">Continue without an account</button>
+  <div style="font-size:11px;color:${C.faint};margin-top:28px;max-width:300px;line-height:1.6;">Your data stays private on this device. Signing in keeps your entries separate per Google account on this browser.</div>
+</div>`;
+  g('guest-btn')?.addEventListener('click',continueGuest);
+  initGoogle();
+}
+
+// ── MAIN RENDER ──
+function render(){
+  if(!S.authed){renderGate();return;}
+  const A=S.accent;const showFab=S.tab==='home'||S.tab==='savings'||S.tab==='transactions';
+  let content='';
+  if(S.tab==='home')content=renderHome();
+  else if(S.tab==='transactions')content=renderTransactions();
+  else if(S.tab==='insights')content=renderInsights();
+  else if(S.tab==='savings')content=renderSavings();
+  else if(S.tab==='tax')content=renderTax();
+  else if(S.tab==='more')content=renderMore();
+  const act=t=>S.tab===t||(t==='more'&&(S.tab==='tax'||S.tab==='savings'||S.tab==='insights'));
+  const navC=t=>act(t)?A:C.faint;
+  const navBg=t=>act(t)?hexA(A,0.12):'transparent';
+  const tb=(id,t,icon,label)=>`<button id="${id}" class="tab-btn" style="color:${navC(t)};background:${navBg(t)};border-radius:13px;padding:7px 0;"><span style="font-size:18px;">${icon}</span><span style="font-size:10.5px;font-weight:700;">${label}</span></button>`;
+  document.getElementById('phone').innerHTML=`
+<div class="scroll-area">${content}</div>
+${showFab?`<button id="fab" class="fab" style="background:linear-gradient(150deg,${A},${darken(A)});box-shadow:0 12px 30px ${hexA(A,0.45)};">+</button>`:''}
+<nav class="tab-bar">
+  ${tb('tab-home','home','◆','Home')}
+  ${tb('tab-transactions','transactions','▤','Transactions')}
+  ${tb('tab-more','more','≡','More')}
+</nav>
+${S.searchOpen?renderSearch():''}
+${S.sheetOpen?renderAddSheet():''}
+${S.bucketSheetOpen?renderBucketSheet():''}`;
+  attachEvents();
+  if(S.searchOpen){const el=document.getElementById('search-input');if(el){const p=el.value.length;el.focus();el.setSelectionRange(p,p);}}
+  if(S.moreView==='currency'){const el=document.getElementById('cur-search');if(el)el.focus();}
+}
+
+// ── EVENTS ──
+function g(id){return document.getElementById(id);}
+function qall(sel){return document.querySelectorAll(sel);}
+
+function editById(sid){const t=S.tx.find(t=>String(t.id)===sid);if(t)openEdit(t);}
+function openEdit(t){setState({sheetOpen:true,editingId:t.id,scanMsg:'',scanBusy:false,draft:{type:t.type,amount:String(t.amount),category:t.bucket?null:t.category,bucket:t.bucket||null,note:t.note||'',date:t.date,account:t.account||'Cash'}});}
+function deleteById(sid){if(window.confirm('Delete this transaction?')){setState(s=>({tx:s.tx.filter(x=>String(x.id)!==sid)}));persist();}}
+function txTX(el){const m=/translateX\(([-0-9.]+)px\)/.exec(el.style.transform||'');return m?parseFloat(m[1]):0;}
+function attachSwipe(){
+  qall('.tx-rowswipe').forEach(el=>{
+    let x0=0,y0=0,eng=false,base=0;
+    el.addEventListener('pointerdown',e=>{x0=e.clientX;y0=e.clientY;base=txTX(el);eng=false;el.dataset.sw='';el.style.transition='none';});
+    el.addEventListener('pointermove',e=>{if(e.pointerType==='mouse'&&e.buttons===0)return;const dx=e.clientX-x0,dy=e.clientY-y0;if(!eng){if(Math.abs(dx)>8&&Math.abs(dx)>Math.abs(dy)){eng=true;try{el.setPointerCapture(e.pointerId);}catch(_){}}else return;}el.dataset.sw='1';let t=Math.max(-104,Math.min(0,base+dx));el.style.transform='translateX('+t+'px)';});
+    const settle=()=>{el.style.transition='transform .18s cubic-bezier(.2,.8,.2,1)';const t=txTX(el);el.style.transform='translateX('+(t<-52?-96:0)+'px)';};
+    el.addEventListener('pointerup',settle);el.addEventListener('pointercancel',settle);
+  });
+}
+function exportTax(){const fy=activeFY();const[fa,fb]=fyBounds(fy);const earned=sumTx(S.tx.filter(t=>t.date>=fa&&t.date<=fb),'income');const gross=S.taxGross!==''?(parseFloat(S.taxGross)||0):earned;const deduct=S.taxDeduct!==''?(parseFloat(S.taxDeduct)||0):0;const r=computeTax(gross,S.taxSalaried,deduct);const better=r.totalNew<=r.totalOld?'New regime':'Old regime';const rows=[['Desi Finance - Tax Summary'],['Financial Year','FY '+fy],['Assessment Year','AY '+fyLabel(fyStartYearOf(fy)+1)],['Currency',S.currency.code],[''],['Gross income',gross],['Salaried (standard deduction)',S.taxSalaried?'Yes':'No'],['Old-regime deductions',deduct],[''],['','New regime','Old regime'],['Taxable income',r.taxableNew,r.taxableOld],['Tax before cess',r.baseNew,r.baseOld],['Cess + surcharge',r.cessNew,r.cessOld],['Total tax',r.totalNew,r.totalOld],[''],['Recommended',better],['Note','Estimate only - verify before filing.']];const csv=rows.map(x=>x.join(',')).join('\n');const blob=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='desi-finance-tax-'+fy+'.csv';a.click();}
+
+function attachEvents(){
+  // tabs
+  g('tab-home')?.addEventListener('click',()=>setState({tab:'home'}));
+  g('tab-transactions')?.addEventListener('click',()=>setState({tab:'transactions'}));
+  g('tab-more')?.addEventListener('click',()=>setState({tab:'more',moreView:null}));
+  g('menu-tax')?.addEventListener('click',()=>setState({tab:'tax'}));
+  g('menu-savings')?.addEventListener('click',()=>setState({tab:'savings'}));
+  g('menu-insights')?.addEventListener('click',()=>setState({tab:'insights'}));
+  g('tax-back')?.addEventListener('click',()=>setState({tab:'more',moreView:null}));
+  g('nav-back')?.addEventListener('click',()=>setState({tab:'more',moreView:null}));
+  g('fab')?.addEventListener('click',()=>setState({sheetOpen:true,editingId:null,scanBusy:false,scanMsg:'',draft:{type:'expense',amount:'0',category:null,bucket:null,note:'',date:today(),account:'Cash'}}));
+  // home
+  g('go-currency')?.addEventListener('click',()=>setState({tab:'more',moreView:'currency'}));
+  g('go-search')?.addEventListener('click',()=>setState({searchOpen:true,searchText:''}));
+  // tx rows (tap = edit; swipe left = reveal delete)
+  qall('[data-edit]').forEach(el=>el.addEventListener('click',()=>{if(el.dataset.sw==='1'){el.dataset.sw='';return;}if(el.classList.contains('tx-rowswipe')&&txTX(el)!==0){el.style.transition='transform .18s';el.style.transform='translateX(0)';return;}editById(el.dataset.edit);}));
+  qall('.tx-del').forEach(el=>el.addEventListener('click',()=>deleteById(el.dataset.del)));
+  // search
+  g('close-search')?.addEventListener('click',()=>setState({searchOpen:false}));
+  g('search-input')?.addEventListener('input',ev=>{setState({searchText:ev.target.value});});
+  // add sheet
+  g('sheet-overlay')?.addEventListener('click',()=>setState({sheetOpen:false,editingId:null,scanMsg:'',scanBusy:false}));
+  g('close-sheet')?.addEventListener('click',()=>setState({sheetOpen:false,editingId:null,scanMsg:'',scanBusy:false}));
+  g('scan-bill')?.addEventListener('click',scanBill);
+  g('delete-tx')?.addEventListener('click',()=>{setState(s=>({tx:s.tx.filter(t=>t.id!==s.editingId),sheetOpen:false,editingId:null}));persist();});
+  g('type-expense')?.addEventListener('click',()=>setState(s=>({draft:{...s.draft,type:'expense',category:null,bucket:null}})));
+  g('type-income')?.addEventListener('click',()=>setState(s=>({draft:{...s.draft,type:'income',category:null,bucket:null}})));
+  g('type-saving')?.addEventListener('click',()=>setState(s=>({draft:{...s.draft,type:'saving',category:null,bucket:null}})));
+  qall('.pick-chip').forEach(el=>el.addEventListener('click',()=>setState(s=>s.draft.type==='saving'?{draft:{...s.draft,bucket:el.dataset.ckey}}:{draft:{...s.draft,category:el.dataset.ckey}})));
+  g('sheet-note')?.addEventListener('input',ev=>{S.draft.note=ev.target.value;});
+  g('sheet-date')?.addEventListener('change',ev=>setState(s=>({draft:{...s.draft,date:ev.target.value}})));
+  g('sheet-amount')?.addEventListener('input',ev=>{S.draft.amount=ev.target.value;const d=S.draft;const ok=(parseFloat(d.amount)||0)>0&&(d.type==='saving'?!!d.bucket:!!d.category);const b=g('save-tx');if(b){b.style.background=ok?S.accent:C.inset;b.style.color=ok?'#fff':C.faint;b.style.boxShadow=ok?'0 10px 24px '+hexA(S.accent,0.32):'none';}});
+  g('sheet-amount')?.addEventListener('keydown',ev=>{if(ev.key==='Enter'){ev.preventDefault();g('save-tx')?.click();}});
+  g('save-tx')?.addEventListener('click',()=>{const d=S.draft;const amt=parseFloat(d.amount)||0;if(amt<=0)return;if(d.type==='saving'?!d.bucket:!d.category)return;setState(s=>{let tx=s.tx.slice();const cat=d.type==='saving'?(s.buckets.find(b=>b.id===d.bucket)||{}).name||'Savings':d.category;const rec={id:s.editingId||Date.now(),type:d.type,amount:amt,category:cat,bucket:d.type==='saving'?d.bucket:null,note:d.note,account:d.account,date:d.date};if(s.editingId)tx=tx.map(t=>t.id===s.editingId?rec:t);else tx.unshift(rec);return{tx,sheetOpen:false,editingId:null};});persist();});
+  // bucket sheet
+  g('bucket-overlay')?.addEventListener('click',()=>setState({bucketSheetOpen:false}));
+  g('close-bucket')?.addEventListener('click',()=>setState({bucketSheetOpen:false}));
+  g('bucket-name')?.addEventListener('change',ev=>setState(s=>({bucketForm:{...s.bucketForm,name:ev.target.value}})));
+  g('bucket-base')?.addEventListener('change',ev=>setState(s=>({bucketForm:{...s.bucketForm,base:ev.target.value}})));
+  g('bucket-goal')?.addEventListener('change',ev=>setState(s=>({bucketForm:{...s.bucketForm,goal:ev.target.value}})));
+  qall('.pick-bucket-color').forEach(el=>el.addEventListener('click',()=>setState(s=>({bucketForm:{...s.bucketForm,color:el.dataset.bcolor}}))));
+  g('save-bucket')?.addEventListener('click',()=>{const f=S.bucketForm;if(!f.name.trim())return;setState(s=>({buckets:[...s.buckets,{id:'b'+Date.now(),name:f.name.trim(),base:parseFloat(f.base)||0,goal:parseFloat(f.goal)||100000,color:f.color}],bucketSheetOpen:false}));persist();});
+  // savings
+  g('go-add-bucket')?.addEventListener('click',()=>setState({bucketSheetOpen:true,bucketForm:{name:'',base:'',goal:'',color:'#B5892E'}}));
+  qall('.contribute-btn').forEach(el=>el.addEventListener('click',()=>setState({sheetOpen:true,editingId:null,draft:{type:'saving',amount:'0',category:null,bucket:el.dataset.bid,note:'',date:today(),account:'Bank'}})));
+  // insights
+  qall('.range-chip').forEach(el=>el.addEventListener('click',()=>setState({range:el.dataset.range})));
+  g('ins-from')?.addEventListener('change',ev=>setState({customFrom:ev.target.value}));
+  g('ins-to')?.addEventListener('change',ev=>setState({customTo:ev.target.value}));
+  // more main
+  g('go-more-main')?.addEventListener('click',()=>setState({moreView:null}));
+  g('export-csv')?.addEventListener('click',()=>{const rows=[['Date','Type','Category','Amount','Account','Note']];S.tx.slice().sort((a,b)=>a.date<b.date?1:-1).forEach(t=>rows.push([t.date,t.type,t.category,t.amount,t.account||'',(t.note||'').replace(/,/g,';')]));const csv=rows.map(r=>r.join(',')).join('\n');const blob=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='desi-finance-export.csv';a.click();});
+  g('reset-data')?.addEventListener('click',()=>{if(window.confirm('Erase all transactions and start fresh?')){setState({...makeSeed(),tab:'home',moreView:null});persist();}});
+  g('menu-currency')?.addEventListener('click',()=>setState({moreView:'currency'}));
+  g('menu-categories')?.addEventListener('click',()=>setState({moreView:'categories'}));
+  g('menu-budgets')?.addEventListener('click',()=>setState({moreView:'budgets'}));
+  g('menu-recurring')?.addEventListener('click',()=>setState({moreView:'recurring'}));
+  g('menu-theme')?.addEventListener('click',()=>setState({moreView:'theme'}));
+  // currency
+  g('cur-search')?.addEventListener('input',ev=>setState({curSearch:ev.target.value}));
+  qall('.pick-currency').forEach(el=>el.addEventListener('click',()=>{set({currency:{code:el.dataset.code}});setState({moreView:null});}));
+  // categories
+  g('cat-input')?.addEventListener('change',ev=>setState({catInput:ev.target.value}));
+  g('toggle-cat-type')?.addEventListener('click',()=>setState(s=>({catType:s.catType==='expense'?'income':'expense'})));
+  g('add-category')?.addEventListener('click',()=>{const v=S.catInput.trim();if(!v)return;setState(s=>{const c={...s.categories};const arr=c[s.catType].slice();if(!arr.includes(v))arr.push(v);c[s.catType]=arr;return{categories:c,catInput:''};});persist();});
+  qall('.remove-cat').forEach(el=>el.addEventListener('click',ev=>{ev.stopPropagation();const type=el.dataset.ctype,name=el.dataset.cname;setState(s=>{const c={...s.categories};c[type]=c[type].filter(x=>x!==name);return{categories:c};});persist();}));
+  // budgets
+  qall('.budget-input').forEach(el=>el.addEventListener('change',ev=>{const cat=el.dataset.bcat;const n=parseFloat(ev.target.value)||0;setState(s=>{const b={...s.budgets};if(n>0)b[cat]=n;else delete b[cat];return{budgets:b};});persist();}));
+  // recurring
+  g('rec-expense')?.addEventListener('click',()=>setState({recFormType:'expense'}));
+  g('rec-income')?.addEventListener('click',()=>setState({recFormType:'income'}));
+  g('rec-cat')?.addEventListener('change',ev=>setState(s=>({recForm:{...s.recForm,category:ev.target.value}})));
+  g('rec-amt')?.addEventListener('change',ev=>setState(s=>({recForm:{...s.recForm,amount:ev.target.value}})));
+  g('rec-day')?.addEventListener('change',ev=>setState(s=>({recForm:{...s.recForm,day:ev.target.value}})));
+  g('add-recurring')?.addEventListener('click',()=>{const f=S.recForm;const amt=parseFloat(f.amount)||0;if(!f.category.trim()||amt<=0)return;let day=parseInt(f.day)||1;day=Math.max(1,Math.min(28,day));setState(s=>({recurring:[...s.recurring,{id:'r'+Date.now(),type:s.recFormType,category:f.category.trim(),amount:amt,day}],recForm:{category:'',amount:'',day:'1'}}));persist();applyRecurring();});
+  qall('.remove-recurring').forEach(el=>el.addEventListener('click',()=>{setState(s=>({recurring:s.recurring.filter(r=>r.id!==el.dataset.rid)}));persist();}));
+  // themes
+  qall('.pick-theme').forEach(el=>el.addEventListener('click',()=>set({accent:el.dataset.tcolor})));
+  // tax
+  qall('.tax-fy').forEach(el=>el.addEventListener('click',()=>setState({taxFY:el.dataset.fy})));
+  g('tax-gross')?.addEventListener('change',ev=>setState({taxGross:ev.target.value}));
+  g('tax-salaried')?.addEventListener('change',ev=>setState({taxSalaried:ev.target.checked}));
+  g('tax-deduct')?.addEventListener('change',ev=>setState({taxDeduct:ev.target.value}));
+  g('tax-export')?.addEventListener('click',exportTax);
+  // backup
+  g('backup-download')?.addEventListener('click',downloadBackup);
+  g('backup-restore')?.addEventListener('click',restoreBackup);
+  // account
+  g('sign-out')?.addEventListener('click',signOut);
+  g('go-signin')?.addEventListener('click',()=>{S.authed=false;render();});
+  // swipe-to-delete
+  attachSwipe();
+}
+
+// ── INIT ──
+(function(){
+  let sess=null;
+  try{sess=JSON.parse(localStorage.getItem('df_session')||'null');}catch(e_){}
+  if(sess&&sess.sub){S.user={sub:sess.sub,name:sess.name,email:sess.email,picture:sess.picture};S.authed=true;}
+  else if(sess&&sess.guest){S.authed=true;}
+  if(S.authed){loadDataForUser();S._ready=true;render();applyRecurring();}
+  else{S._ready=true;render();}
+})();
+
+// Register the service worker for offline support (no-op on file:// or unsupported browsers).
+if('serviceWorker' in navigator && location.protocol.startsWith('http')){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('sw.js').catch(function(){});
+  });
+}
+</script>
+</body>
+</html>
