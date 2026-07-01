@@ -1,5 +1,5 @@
 // Finance Tracker service worker — offline app shell caching.
-const CACHE = 'desi-finance-v11';
+const CACHE = 'desi-finance-v12';
 
 // Files that make up the app shell (relative to the SW scope).
 const SHELL = [
